@@ -10,3 +10,4 @@ src/client/util/store
 test-ledger/
 
 dist
+secret_keys.txt

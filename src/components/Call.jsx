@@ -36,9 +36,8 @@ const GREETING_SIZE = borsh.serialize(
   new GreetingAccount(),
 ).length;
 
-const PAYER_SECRET_KEY = null;
-const PROGRAM_SECRET_KEY = null;
-
+const PAYER_SECRET_KEY =  // format: [1,2,...];
+const PROGRAM_SECRET_KEY = // format: [1,2,...]; 
 const Program = () => {
   const [connection, setConnection] = useState(null);
   const [programId, setProgramId] = useState(null);
@@ -68,8 +67,8 @@ const Program = () => {
     setProgramId(programId);
   
     // // Check if the program has been deployed
-    // await connection.getAccountInfo(programId);
-    // console.log(`Using program ${programId.toBase58()}`);
+    await connection.getAccountInfo(programId); //this was commented out before
+    console.log(`Using program ${programId.toBase58()}`); //this was commented out before
 
     const payerSecretKey = new Uint8Array(PAYER_SECRET_KEY);
     const payerKeypair = Keypair.fromSecretKey(payerSecretKey);
@@ -111,13 +110,34 @@ const Program = () => {
     // Load the payer's Keypair from the Uint8Array PAYER_SECRET_KEY
     // by using Keypair.fromsecretkey
     // https://solana-labs.github.io/solana-web3.js/classes/keypair.html#fromsecretkey
-  
+    const payerSecretKey = new Uint8Array(PAYER_SECRET_KEY);
+    const payerKeypair = Keypair.fromSecretKey(payerSecretKey);
+
     // Create the TransactionInstruction by passing keys, programId and data
     // For data you can pass Buffer.alloc(0) as all the program's instructions are the same
-  
+    const instruction = new TransactionInstruction({
+      keys: [{pubkey: greeterPublicKey, isSigner: false, isWritable: true}],
+      programId,
+      data: Buffer.alloc(0),
+    }); 
+
     // Call sendAndConfirmTransaction
     // https://solana-labs.github.io/solana-web3.js/modules.html#sendandconfirmtransaction
-    // On success, call getGreetings() to fetch the greetings counter
+    
+    setGreetFetching(true);
+    sendAndConfirmTransaction(
+      connection, 
+      new Transaction().add(instruction), 
+      [payerKeypair], 
+    ).then(sig => {     // On success, call getGreetings() to fetch the greetings counter
+      console.log(`SUCCESS`,sig);
+      setGreetTxSignature(sig);
+      setGreetFetching(false);
+      getGreetings();
+    }).catch((err) => {
+      console.log(`ERROR`,err);
+      setGreetFetching(false);
+    })
   }
 
   const getGreetings = async () => {
